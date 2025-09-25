@@ -1,9 +1,4 @@
-import {
-  CalendarIcon,
-  UsersIcon,
-  StethoscopeIcon,
-  UserCircle,
-} from "lucide-react";
+import { Home, User, Building, Calendar, CreditCard } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   SidebarGroup,
@@ -13,11 +8,17 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const projects = [
-  { key: "citas", name: "Citas", url: "/citas", icon: CalendarIcon },
-  { key: "pacientes", name: "Pacientes", url: "/pacientes", icon: UsersIcon },
-  { key: "medicos", name: "Médicos", url: "/medicos", icon: StethoscopeIcon },
-  { key: "perfil", name: "Perfil", url: "/perfil", icon: UserCircle },
+const items = [
+  { key: "inicio", name: "Inicio", url: "/inicio", icon: Home },
+  { key: "perfil", name: "Mi Perfil", url: "/perfil", icon: User },
+  { key: "ambientes", name: "Ambientes", url: "/ambientes", icon: Building },
+  {
+    key: "disponibilidad",
+    name: "Disponibilidad y Reservas",
+    url: "/disponibilidad",
+    icon: Calendar,
+  },
+  { key: "pagos", name: "Pagos e Historial", url: "/pagos", icon: CreditCard },
 ];
 
 export function NavProjects() {
@@ -25,26 +26,22 @@ export function NavProjects() {
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Módulos</SidebarGroupLabel>
+      <SidebarGroupLabel>INICIO</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => {
-          const isActive = location.pathname === item.url;
+        {items.map((item) => {
+          const active = location.pathname === item.url;
 
           return (
-            <SidebarMenuItem
-              key={item.name}
-              className={isActive ? "bg-muted" : ""}
-            >
+            <SidebarMenuItem key={item.key} className={active ? "bg-muted" : ""}>
               <SidebarMenuButton asChild tooltip={item.name}>
                 <NavLink
                   to={item.url}
                   className={({ isActive }) =>
-                    isActive
-                      ? "text-primary font-medium"
-                      : "text-muted-foreground"
+                    (isActive ? "text-primary font-medium " : "text-muted-foreground ") +
+                    "flex items-center"
                   }
                 >
-                  <item.icon style={{ marginRight: 10 }} />
+                  <item.icon className="mr-2 h-4 w-4" />
                   <span>{item.name}</span>
                 </NavLink>
               </SidebarMenuButton>

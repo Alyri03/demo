@@ -1,27 +1,9 @@
 export const MODULOS_ROLES = {
-  paciente: [
-    "main",
-    "citas",
-    "perfil",
-  ],
-  medico: [
-    "main",
-    "agenda",
-    "atencion",
-    "pacientes",
-    "perfil",
-  ],
-  recepcionista: [
-    "citas",
-    "pacientes",
-    "medicos",
-    "perfil",
-  ],
-  administrador: [
-    "dashboard",
-    "pacientes",
-    "medicos",
-    "recepcionistas",
-    "perfil",
+  socio: [
+    { path: "inicio", label: "Inicio" },
+    { path: "perfil", label: "Mi Perfil" },
+    { path: "ambientes", label: "Ambientes" },
+    { path: "disponibilidad", label: "Disponibilidad y Reservas" },
+    { path: "pagos", label: "Pagos e Historial" },
   ],
 };

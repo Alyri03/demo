@@ -1,18 +1,21 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Layout from "../src/router/layout"
+import Layout from "./router/layout";
 
-
-function CitasPage() {
-  return <div>Contenido de Citas</div>;
-}
-function PacientesPage() {
-  return <div>Contenido de Pacientes</div>;
-}
-function MedicosPage() {
-  return <div>Contenido de Médicos</div>;
+// Páginas placeholder
+function InicioPage() {
+  return <div>Contenido de Inicio</div>;
 }
 function PerfilPage() {
   return <div>Contenido de Perfil</div>;
+}
+function AmbientesPage() {
+  return <div>Contenido de Ambientes</div>;
+}
+function DisponibilidadPage() {
+  return <div>Contenido de Disponibilidad y Reservas</div>;
+}
+function PagosPage() {
+  return <div>Contenido de Pagos e Historial</div>;
 }
 
 const router = createBrowserRouter([
@@ -20,10 +23,11 @@ const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     children: [
-      { path: "citas", element: <CitasPage /> },
-      { path: "pacientes", element: <PacientesPage /> },
-      { path: "medicos", element: <MedicosPage /> },
+      { path: "inicio", element: <InicioPage /> },
       { path: "perfil", element: <PerfilPage /> },
+      { path: "ambientes", element: <AmbientesPage /> },
+      { path: "disponibilidad", element: <DisponibilidadPage /> },
+      { path: "pagos", element: <PagosPage /> },
     ],
   },
 ]);
