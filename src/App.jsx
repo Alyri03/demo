@@ -1,22 +1,13 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./router/layout";
+import FacilitiesPage from "@/feature/facilities/FacilitiesPage";
 
-// Páginas placeholder
-function InicioPage() {
-  return <div>Contenido de Inicio</div>;
-}
-function PerfilPage() {
-  return <div>Contenido de Perfil</div>;
-}
-function AmbientesPage() {
-  return <div>Contenido de Ambientes</div>;
-}
-function DisponibilidadPage() {
-  return <div>Contenido de Disponibilidad y Reservas</div>;
-}
-function PagosPage() {
-  return <div>Contenido de Pagos e Historial</div>;
-}
+function InicioPage() { return <div>Contenido de Inicio</div>; }
+function PerfilPage() { return <div>Contenido de Perfil</div>; }
+// elimina el placeholder de Ambientes
+
+function DisponibilidadPage() { return <div>Contenido de Disponibilidad y Reservas</div>; }
+function PagosPage() { return <div>Contenido de Pagos e Historial</div>; }
 
 const router = createBrowserRouter([
   {
@@ -25,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       { path: "inicio", element: <InicioPage /> },
       { path: "perfil", element: <PerfilPage /> },
-      { path: "ambientes", element: <AmbientesPage /> },
+      { path: "ambientes", element: <FacilitiesPage /> },
       { path: "disponibilidad", element: <DisponibilidadPage /> },
       { path: "pagos", element: <PagosPage /> },
     ],

@@ -32,13 +32,17 @@ export function NavProjects() {
           const active = location.pathname === item.url;
 
           return (
-            <SidebarMenuItem key={item.key} className={active ? "bg-muted" : ""}>
+            <SidebarMenuItem
+              key={item.key}
+              className={active ? "bg-muted" : ""}
+            >
               <SidebarMenuButton asChild tooltip={item.name}>
                 <NavLink
                   to={item.url}
                   className={({ isActive }) =>
-                    (isActive ? "text-primary font-medium " : "text-muted-foreground ") +
-                    "flex items-center"
+                    (isActive
+                      ? "text-primary font-medium "
+                      : "text-muted-foreground ") + "flex items-center"
                   }
                 >
                   <item.icon className="mr-2 h-4 w-4" />
