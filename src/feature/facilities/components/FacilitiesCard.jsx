@@ -33,7 +33,7 @@ export default function FacilitiesCard({
   availableToday,
   nextAvailability,
   discountSocio,
-  onOpenModal, // ⬅️ Nuevo prop
+  onOpenModal, 
 }) {
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -148,7 +148,7 @@ export default function FacilitiesCard({
         {/* Botón que abre modal */}
         <Button
           className="w-full flex items-center gap-2 mt-4"
-          onClick={onOpenModal} // ⬅️ Aquí
+          onClick={onOpenModal}
         >
           <Calendar className="w-4 h-4" />
           Ver Disponibilidad
