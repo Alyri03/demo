@@ -34,7 +34,8 @@ import {
 } from "lucide-react";
 import CancelModal from "./CancelModal";
 import PaymentModal from "./PaymetModal";
-import ReprogramModal from "./ReprogramModal"; 
+import ReprogramModal from "./ReprogramModal";
+import DetailModal from "./DetailModal";
 import { toast } from "sonner";
 
 export default function FacilitiesTable() {
@@ -75,7 +76,8 @@ export default function FacilitiesTable() {
 
   const [openCancel, setOpenCancel] = useState(false);
   const [openPayment, setOpenPayment] = useState(false);
-  const [openReprogram, setOpenReprogram] = useState(false); // ⬅️ nuevo
+  const [openReprogram, setOpenReprogram] = useState(false);
+  const [openDetail, setOpenDetail] = useState(false); // ⬅️ nuevo
   const [selected, setSelected] = useState(null);
 
   const getBadgeClass = (estado) => {
@@ -189,6 +191,11 @@ export default function FacilitiesTable() {
       setOpenReprogram(true);
       return;
     }
+    if (actionKey === "ver") {
+      setSelected(row);
+      setOpenDetail(true); // ⬅️ abre el detail modal
+      return;
+    }
     toast(messageForAction(actionKey, row));
   };
 
@@ -262,6 +269,10 @@ export default function FacilitiesTable() {
   };
   const handleReprogramOpenChange = (open) => {
     setOpenReprogram(open);
+    if (!open) setSelected(null);
+  };
+  const handleDetailOpenChange = (open) => {
+    setOpenDetail(open);
     if (!open) setSelected(null);
   };
 
@@ -374,6 +385,11 @@ export default function FacilitiesTable() {
         onClose={handleReprogramOpenChange}
         reserva={selected}
         onConfirm={confirmReprogram}
+      />
+      <DetailModal
+        open={openDetail}
+        onClose={handleDetailOpenChange}
+        reserva={selected}
       />
     </div>
   );
