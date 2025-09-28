@@ -32,7 +32,6 @@ export default function FacilitiesPage() {
       price: 60,
       oldPrice: 120,
       availableToday: true,
-      discountSocio: "-50% Socios",
     },
     {
       image: "/cancha-futbol.jpg",
@@ -60,7 +59,6 @@ export default function FacilitiesPage() {
       price: 75,
       oldPrice: 150,
       availableToday: true,
-      discountSocio: "-50% Socios",
     },
     {
       image: "/parrilla-familiar.jpg",
@@ -74,7 +72,6 @@ export default function FacilitiesPage() {
       price: 25,
       oldPrice: 50,
       availableToday: true,
-      discountSocio: "-50% Socios",
     },
     {
       image: "/salon-ejecutivo.jpg",
@@ -90,7 +87,6 @@ export default function FacilitiesPage() {
       oldPrice: 90,
       availableToday: false,
       nextAvailability: "22/09",
-      discountSocio: "-50% Socios",
     },
     {
       image: "/cancha-tenis.jpg",
@@ -103,7 +99,7 @@ export default function FacilitiesPage() {
       price: 30,
       oldPrice: 60,
       availableToday: true,
-      discountSocio: "-50% Socios",
+      
     },
     {
       image: "/zona-bbq.jpg",

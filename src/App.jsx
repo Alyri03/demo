@@ -1,16 +1,15 @@
+// src/App.jsx
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Layout from "./router/layout";
 import FacilitiesPage from "@/feature/facilities/FacilitiesPage";
-import DisponibilityPage from "@/feature/disponibility/DisponibilityPage"; 
+import DisponibilityPage from "@/feature/disponibility/DisponibilityPage";
+import PaymentsPage from "@/feature/payments/PaymentsPage"; 
 
-function InicioPage() { 
-  return <div>Contenido de Inicio</div>; 
+function InicioPage() {
+  return <div>Contenido de Inicio</div>;
 }
-function PerfilPage() { 
-  return <div>Contenido de Perfil</div>; 
-}
-function PagosPage() { 
-  return <div>Contenido de Pagos e Historial</div>; 
+function PerfilPage() {
+  return <div>Contenido de Perfil</div>;
 }
 
 const router = createBrowserRouter([
@@ -22,7 +21,7 @@ const router = createBrowserRouter([
       { path: "perfil", element: <PerfilPage /> },
       { path: "ambientes", element: <FacilitiesPage /> },
       { path: "disponibilidad", element: <DisponibilityPage /> },
-      { path: "pagos", element: <PagosPage /> },
+      { path: "pagos", element: <PaymentsPage /> },
     ],
   },
 ]);

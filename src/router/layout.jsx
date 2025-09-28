@@ -1,4 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { Toaster } from "@/components/ui/sonner"
+
 import {
   SidebarInset,
   SidebarProvider,
@@ -32,6 +34,7 @@ export default function Layout() {
             <Outlet />
           </div>
         </main>
+         <Toaster />
       </SidebarInset>
     </SidebarProvider>
   );
