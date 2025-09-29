@@ -18,12 +18,12 @@ import {
 import { toast } from "sonner";
 
 /* ----------------------------- Configuración ----------------------------- */
-const START_HOUR = 8; // 08:00
-const END_HOUR = 18; // 18:00
-const SLOT_MIN = 30; // tamaño del bloque
-const CELL_H = 28; // alto px por bloque de 30 min
-const LEFT_COL_W = 64; // ancho de columna de horas
-const COL_GAP = 8; // separación entre días
+const START_HOUR = 8;   // 08:00
+const END_HOUR   = 18;  // 18:00
+const SLOT_MIN   = 30;  // tamaño del bloque
+const CELL_H     = 28;  // alto px por bloque de 30 min
+const LEFT_COL_W = 64;  // ancho de columna de horas
+const COL_GAP    = 8;   // separación entre días
 const MIN_DURATION = 30; // duración mínima (minutos)
 
 const estadoToClass = {
@@ -132,23 +132,34 @@ export default function ReservasCalendarLite() {
   const [items, setItems] = useState(DEMO);
   const [detalle, setDetalle] = useState(null);
 
-  const todayISO = ymd(new Date()); // ← para resaltar hoy
+  const todayISO = ymd(new Date());
 
-  const gridRef = useRef(null);
+  const gridRef = useRef(null);       // Semana
+  const monthRef = useRef(null);      // Mes
   const [colWidth, setColWidth] = useState(120);
 
-  // drag/resize
+  // drag/resize comun
   const [activeId, setActiveId] = useState(null);
-  const [mode, setMode] = useState(null); // "move" | "resize-start" | "resize-end"
+  const [mode, setMode] = useState(null); // "move" | "resize-start" | "resize-end" | "move-month"
   const [dragOffset, setDragOffset] = useState(0);
   const [dragDur, setDragDur] = useState(0);
   const beforeEditRef = useRef(null);
   const [invalid, setInvalid] = useState(false);
 
+  // Click/drag pendiente: {row, x0, y0, ctx: 'week'|'month'}
+  const [pending, setPending] = useState(null);
+
   const wkStart = useMemo(() => startOfWeek(cursor), [cursor]);
   const days = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(wkStart, i)),
     [wkStart]
+  );
+
+  // Mes: matriz de 6x7 desde inicio de grilla del mes
+  const monthGridStart = useMemo(() => startOfMonthGrid(cursor), [cursor]);
+  const monthCells = useMemo(
+    () => Array.from({ length: 42 }, (_, i) => addDays(monthGridStart, i)),
+    [monthGridStart]
   );
 
   const titulo = useMemo(() => {
@@ -163,7 +174,7 @@ export default function ReservasCalendarLite() {
 
   const altoGrid = (((END_HOUR - START_HOUR) * 60) / SLOT_MIN) * CELL_H;
 
-  // medir ancho
+  // medir ancho semana
   useEffect(() => {
     function measure() {
       if (!gridRef.current) return;
@@ -196,23 +207,14 @@ export default function ReservasCalendarLite() {
   }
 
   /* ----------------------- Drag & Resize -------------------------- */
-  function startMove(e, r) {
-    if (vista !== "semana" || !gridRef.current) return;
-    const rect = gridRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const startMin = hhmmToMin(r.inicio);
-    const topPx = ((startMin - START_HOUR * 60) / SLOT_MIN) * CELL_H;
-
-    beforeEditRef.current = items;
-    setActiveId(r.id);
-    setMode("move");
-    setDragOffset(y - topPx);
-    setDragDur(hhmmToMin(r.fin) - startMin);
-    setInvalid(false);
-    e.preventDefault();
+  function onEventMouseDown(e, r, ctx /* 'week' | 'month' */) {
+    if ((ctx === "week" && !gridRef.current) || (ctx === "month" && !monthRef.current)) return;
+    setPending({ row: r, x0: e.clientX, y0: e.clientY, ctx });
   }
+
   function startResize(e, r, edge) {
-    if (vista !== "semana" || !gridRef.current) return;
+    if (!gridRef.current) return;
+    setPending(null); // cancelar click pendiente
     beforeEditRef.current = items;
     setActiveId(r.id);
     setMode(edge);
@@ -223,77 +225,159 @@ export default function ReservasCalendarLite() {
   }
 
   useEffect(() => {
-    function onMove(e) {
-      if (!activeId || !gridRef.current || !mode) return;
-
+    function promotePendingToWeekDrag(pend, ev) {
+      const r = pend.row;
       const rect = gridRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const y = ev.clientY - rect.top;
 
-      const target = items.find((i) => i.id === activeId);
-      if (!target) return;
+      const startMinV = hhmmToMin(r.inicio);
+      const topPx = ((startMinV - START_HOUR * 60) / SLOT_MIN) * CELL_H;
 
-      // índice de día (centros de columna)
-      const step = colWidth + COL_GAP;
-      let dayIdx = Math.round((x - LEFT_COL_W - colWidth / 2) / step);
-      dayIdx = clamp(dayIdx, 0, 6);
-      const newDay = ymd(days[dayIdx]);
+      beforeEditRef.current = items;
+      setActiveId(r.id);
+      setMode("move");
+      setDragOffset(y - topPx);
+      setDragDur(hhmmToMin(r.fin) - startMinV);
+      setInvalid(false);
+      setPending(null);
+    }
 
-      // posición vertical → minutos snapeados
-      const rawMin =
-        START_HOUR * 60 +
-        Math.round((y - (mode === "move" ? dragOffset : 0)) / CELL_H) *
-          SLOT_MIN;
-      const snappedMin = clamp(
-        roundToSlot(rawMin),
-        START_HOUR * 60,
-        END_HOUR * 60
-      );
+    function promotePendingToMonthDrag(pend) {
+      beforeEditRef.current = items;
+      setActiveId(pend.row.id);
+      setMode("move-month");
+      setInvalid(false);
+      setPending(null);
+    }
 
-      setItems((prev) =>
-        prev.map((it) => {
-          if (it.id !== activeId) return it;
-
-          let newStart = hhmmToMin(it.inicio);
-          let newEnd = hhmmToMin(it.fin);
-
-          if (mode === "move") {
-            newStart = clamp(
-              snappedMin,
-              START_HOUR * 60,
-              END_HOUR * 60 - dragDur
-            );
-            newEnd = newStart + dragDur;
-          } else if (mode === "resize-start") {
-            const maxStart = newEnd - MIN_DURATION;
-            newStart = clamp(snappedMin, START_HOUR * 60, maxStart);
-          } else if (mode === "resize-end") {
-            const minEnd = newStart + MIN_DURATION;
-            const yEndRaw = START_HOUR * 60 + Math.round(y / CELL_H) * SLOT_MIN;
-            newEnd = clamp(roundToSlot(yEndRaw), minEnd, END_HOUR * 60);
+    function onMove(e) {
+      // si hay click pendiente y aún no hay drag → evaluar promoción
+      if (pending && !activeId && !mode) {
+        const dist = Math.hypot(e.clientX - pending.x0, e.clientY - pending.y0);
+        if (dist > 4) {
+          if (pending.ctx === "week" && gridRef.current) {
+            promotePendingToWeekDrag(pending, e);
+          } else if (pending.ctx === "month" && monthRef.current) {
+            promotePendingToMonthDrag(pending);
           }
+        }
+        return;
+      }
 
-          const hasConflict = conflict(it, newDay, newStart, newEnd);
-          setInvalid(hasConflict);
+      // Semana: mover / resize
+      if (activeId && mode && (mode === "move" || mode.startsWith("resize"))) {
+        if (!gridRef.current) return;
+        const rect = gridRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
 
-          return {
-            ...it,
-            fechaISO: newDay,
-            inicio: minToHHMM(newStart),
-            fin: minToHHMM(newEnd),
-          };
-        })
-      );
+        const target = items.find((i) => i.id === activeId);
+        if (!target) return;
+
+        const step = colWidth + COL_GAP;
+        let dayIdx = Math.round((x - LEFT_COL_W - colWidth / 2) / step);
+        dayIdx = clamp(dayIdx, 0, 6);
+        const newDay = ymd(days[dayIdx]);
+
+        const rawMin =
+          START_HOUR * 60 +
+          Math.round((y - (mode === "move" ? dragOffset : 0)) / CELL_H) *
+            SLOT_MIN;
+        const snappedMin = clamp(
+          roundToSlot(rawMin),
+          START_HOUR * 60,
+          END_HOUR * 60
+        );
+
+        setItems((prev) =>
+          prev.map((it) => {
+            if (it.id !== activeId) return it;
+
+            let newStart = hhmmToMin(it.inicio);
+            let newEnd = hhmmToMin(it.fin);
+
+            if (mode === "move") {
+              newStart = clamp(
+                snappedMin,
+                START_HOUR * 60,
+                END_HOUR * 60 - dragDur
+              );
+              newEnd = newStart + dragDur;
+            } else if (mode === "resize-start") {
+              const maxStart = newEnd - MIN_DURATION;
+              newStart = clamp(snappedMin, START_HOUR * 60, maxStart);
+            } else if (mode === "resize-end") {
+              const minEnd = newStart + MIN_DURATION;
+              const yEndRaw =
+                START_HOUR * 60 + Math.round(e.clientY - rect.top) / CELL_H * SLOT_MIN;
+              newEnd = clamp(roundToSlot(yEndRaw), minEnd, END_HOUR * 60);
+            }
+
+            const hasConflict = conflict(it, newDay, newStart, newEnd);
+            setInvalid(hasConflict);
+
+            return {
+              ...it,
+              fechaISO: newDay,
+              inicio: minToHHMM(newStart),
+              fin: minToHHMM(newEnd),
+            };
+          })
+        );
+        return;
+      }
+
+      // Mes: mover (solo cambia fecha)
+      if (activeId && mode === "move-month") {
+        if (!monthRef.current) return;
+        const rect = monthRef.current.getBoundingClientRect();
+
+        // posición relativa dentro del grid 6x7
+        const relX = clamp(e.clientX - rect.left, 0, rect.width - 1);
+        const relY = clamp(e.clientY - rect.top, 0, rect.height - 1);
+        const col = Math.floor((relX / rect.width) * 7);
+        const row = Math.floor((relY / rect.height) * 6);
+        const idx = clamp(row * 7 + col, 0, 41);
+
+        const newDayISO = ymd(addDays(monthGridStart, idx));
+
+        setItems((prev) =>
+          prev.map((it) => {
+            if (it.id !== activeId) return it;
+
+            // mantiene horas, solo cambia fecha
+            const newStart = hhmmToMin(it.inicio);
+            const newEnd = hhmmToMin(it.fin);
+
+            const hasConflict = conflict(it, newDayISO, newStart, newEnd);
+            setInvalid(hasConflict);
+
+            return { ...it, fechaISO: newDayISO };
+          })
+        );
+      }
     }
 
     function onUp() {
+      // click (no hubo drag)
+      if (pending && !activeId && !mode) {
+        setDetalle(pending.row);
+        setPending(null);
+        return;
+      }
+      setPending(null);
+
+      // finalizar drag
       if (!activeId || !mode) return;
+
       if (invalid) {
         setItems(beforeEditRef.current || DEMO);
         toast.error("Conflicto con otra reserva del mismo ambiente");
       } else {
         toast.success(
-          mode === "move"
+          mode === "move-month"
+            ? "Día actualizado (demo)"
+            : mode === "move"
             ? "Reserva reprogramada (demo)"
             : "Duración actualizada (demo)"
         );
@@ -309,11 +393,10 @@ export default function ReservasCalendarLite() {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
     };
-  }, [activeId, mode, dragOffset, dragDur, items, days, colWidth, invalid]);
+  }, [pending, activeId, mode, dragOffset, dragDur, items, days, colWidth, invalid, monthGridStart]);
 
   /* ------------------------------ Week View ------------------------------- */
   function WeekView() {
-    // ¿hoy está visible?
     const todayIdx = days.findIndex((d) => ymd(d) === todayISO);
 
     return (
@@ -331,8 +414,7 @@ export default function ReservasCalendarLite() {
                   ymd(d) === todayISO ? "text-amber-700" : ""
                 }`}
               >
-                {diaCorto[i]} {String(d.getDate()).padStart(2, "0")}/
-                {d.getMonth() + 1}
+                {diaCorto[i]} {String(d.getDate()).padStart(2, "0")}/{d.getMonth() + 1}
               </div>
             ))}
           </div>
@@ -344,7 +426,7 @@ export default function ReservasCalendarLite() {
           className="relative bg-background"
           style={{ height: altoGrid }}
         >
-          {/* ✅ Overlay de HOY (debajo de todo, no captura eventos) */}
+          {/* Overlay de HOY */}
           {todayIdx >= 0 && (
             <div
               className="absolute top-0 bottom-0 pointer-events-none bg-amber-50/60"
@@ -362,10 +444,7 @@ export default function ReservasCalendarLite() {
             className="absolute left-0 top-0 w-16 h-full border-r bg-background z-10"
             aria-hidden
           >
-            {Array.from(
-              { length: END_HOUR - START_HOUR + 1 },
-              (_, i) => START_HOUR + i
-            ).map((h, i) => (
+            {Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => START_HOUR + i).map((h, i) => (
               <div
                 key={i}
                 className="absolute left-0 w-16 text-[11px] text-muted-foreground pl-2 -translate-y-1/2"
@@ -382,10 +461,7 @@ export default function ReservasCalendarLite() {
               key={i}
               className="absolute top-0 bottom-0 border-l"
               style={{
-                left:
-                  i === 0
-                    ? LEFT_COL_W
-                    : LEFT_COL_W + i * colWidth + (i - 1) * COL_GAP,
+                left: i === 0 ? LEFT_COL_W : LEFT_COL_W + i * colWidth + (i - 1) * COL_GAP,
               }}
               aria-hidden
             />
@@ -398,9 +474,7 @@ export default function ReservasCalendarLite() {
           ).map((r) => (
             <div
               key={r}
-              className={`absolute left-16 right-0 ${
-                r % 2 === 0 ? "border-t" : "border-t border-muted/60"
-              }`}
+              className={`absolute left-16 right-0 ${r % 2 === 0 ? "border-t" : "border-t border-muted/60"}`}
               style={{ top: r * CELL_H }}
               aria-hidden
             />
@@ -411,10 +485,10 @@ export default function ReservasCalendarLite() {
             const dIdx = days.findIndex((d) => ymd(d) === r.fechaISO);
             if (dIdx < 0) return null;
 
-            const startMin = hhmmToMin(r.inicio);
-            const endMin = hhmmToMin(r.fin);
-            const top = ((startMin - START_HOUR * 60) / SLOT_MIN) * CELL_H;
-            const height = ((endMin - startMin) / SLOT_MIN) * CELL_H;
+            const startMinV = hhmmToMin(r.inicio);
+            const endMinV = hhmmToMin(r.fin);
+            const top = ((startMinV - START_HOUR * 60) / SLOT_MIN) * CELL_H;
+            const height = ((endMinV - startMinV) / SLOT_MIN) * CELL_H;
             const left = LEFT_COL_W + dIdx * (colWidth + COL_GAP);
             const width = colWidth;
             const isActive = activeId === r.id;
@@ -427,9 +501,8 @@ export default function ReservasCalendarLite() {
                 } ${isActive && mode ? "ring-2 ring-primary/50" : ""} ${
                   isActive && invalid ? "ring-2 ring-rose-400" : ""
                 } cursor-grab active:cursor-grabbing`}
-                style={{ top, left, width, height, zIndex: 1 }} // encima del overlay
-                onMouseDown={(e) => startMove(e, r)}
-                onDoubleClick={() => setDetalle(r)}
+                style={{ top, left, width, height, zIndex: 1 }}
+                onMouseDown={(e) => onEventMouseDown(e, r, "week")}
                 role="button"
                 tabIndex={0}
               >
@@ -444,7 +517,7 @@ export default function ReservasCalendarLite() {
                   </span>
                 </div>
 
-                {/* handlers de resize ocultos */}
+                {/* handlers de resize */}
                 <div
                   className="absolute left-1 right-1 top-0 h-2 opacity-0 cursor-ns-resize"
                   onMouseDown={(e) => startResize(e, r, "resize-start")}
@@ -465,9 +538,6 @@ export default function ReservasCalendarLite() {
 
   /* ------------------------------ Month View ------------------------------ */
   function MonthView() {
-    const gridStart = startOfMonthGrid(cursor);
-    const cells = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i)); // 6 semanas
-
     return (
       <div className="border rounded-2xl overflow-hidden">
         {/* Días de semana */}
@@ -479,9 +549,9 @@ export default function ReservasCalendarLite() {
           ))}
         </div>
 
-        {/* Celdas */}
-        <div className="grid grid-cols-7 gap-px bg-border">
-          {cells.map((d, i) => {
+        {/* Celdas (6x7) */}
+        <div ref={monthRef} className="grid grid-cols-7 gap-px bg-border">
+          {monthCells.map((d, i) => {
             const isThisMonth = d.getMonth() === cursor.getMonth();
             const diaISO = ymd(d);
             const dayItems = items.filter((r) => r.fechaISO === diaISO);
@@ -498,13 +568,15 @@ export default function ReservasCalendarLite() {
                   {d.getDate()}
                 </div>
                 <div className="space-y-1">
-                  {dayItems.slice(0, 2).map((r) => (
+                  {dayItems.slice(0, 3).map((r) => (
                     <div
                       key={r.id}
                       className={`rounded-md border px-2 py-1 text-[11px] cursor-pointer hover:opacity-90 ${
                         estadoToClass[r.estado]
                       }`}
-                      onClick={() => setDetalle(r)}
+                      onMouseDown={(e) => onEventMouseDown(e, r, "month")}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="font-medium truncate">{r.ambiente}</div>
                       <div className="opacity-80">
@@ -512,9 +584,9 @@ export default function ReservasCalendarLite() {
                       </div>
                     </div>
                   ))}
-                  {dayItems.length > 2 && (
+                  {dayItems.length > 3 && (
                     <div className="text-[11px] text-muted-foreground">
-                      +{dayItems.length - 2} más
+                      +{dayItems.length - 3} más
                     </div>
                   )}
                 </div>
@@ -532,28 +604,16 @@ export default function ReservasCalendarLite() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={prev}
-            aria-label="Anterior"
-          >
+          <Button variant="outline" size="icon" onClick={prev} aria-label="Anterior">
             <ChevronLeft className="size-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={next}
-            aria-label="Siguiente"
-          >
+          <Button variant="outline" size="icon" onClick={next} aria-label="Siguiente">
             <ChevronRight className="size-4" />
           </Button>
           <Button variant="outline" onClick={today} className="gap-2">
             <CalendarIcon className="size-4" /> Hoy
           </Button>
-          <span className="ml-2 text-base md:text-lg font-semibold">
-            {titulo}
-          </span>
+          <span className="ml-2 text-base md:text-lg font-semibold">{titulo}</span>
         </div>
 
         {/* Botones Mes / Semana */}
@@ -583,18 +643,10 @@ export default function ReservasCalendarLite() {
       {/* Leyenda */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="text-muted-foreground mr-1">Estados:</span>
-        <Badge variant="outline" className={estadoToClass.Reservado}>
-          Reservado
-        </Badge>
-        <Badge variant="outline" className={estadoToClass.Pendiente}>
-          Pendiente
-        </Badge>
-        <Badge variant="outline" className={estadoToClass.Cancelado}>
-          Cancelado
-        </Badge>
-        <Badge variant="outline" className={estadoToClass.Finalizado}>
-          Finalizado
-        </Badge>
+        <Badge variant="outline" className={estadoToClass.Reservado}>Reservado</Badge>
+        <Badge variant="outline" className={estadoToClass.Pendiente}>Pendiente</Badge>
+        <Badge variant="outline" className={estadoToClass.Cancelado}>Cancelado</Badge>
+        <Badge variant="outline" className={estadoToClass.Finalizado}>Finalizado</Badge>
       </div>
 
       {/* Dialog de detalle */}
@@ -610,10 +662,7 @@ export default function ReservasCalendarLite() {
               </DialogHeader>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className={estadoToClass[detalle.estado]}
-                  >
+                  <Badge variant="outline" className={estadoToClass[detalle.estado]}>
                     {detalle.estado}
                   </Badge>
                 </div>
@@ -624,20 +673,14 @@ export default function ReservasCalendarLite() {
                   </span>
                 </div>
                 <p className="text-muted-foreground">
-                  (Demo) Aquí podrías mostrar políticas del ambiente, ubicación,
-                  responsable, etc.
+                  (Demo) Aquí podrías mostrar políticas del ambiente, ubicación, responsable, etc.
                 </p>
               </div>
               <DialogFooter className="gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => toast.message("Ver comprobante (demo)")}
-                >
+                <Button variant="outline" onClick={() => toast.message("Ver comprobante (demo)")}>
                   Ver comprobante
                 </Button>
-                <Button
-                  onClick={() => toast.success("Acción principal (demo)")}
-                >
+                <Button onClick={() => toast.success("Acción principal (demo)")}>
                   Acción principal
                 </Button>
               </DialogFooter>

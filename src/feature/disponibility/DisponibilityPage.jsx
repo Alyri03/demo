@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import FacilitiesTable from "./components/FacilitiesTable";
 import ReservaDetailPanel from "./components/ReservaDetailPanel";
+import DisponibilityToolbar from "./components/DisponibilityToolbar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Calendar as CalendarIcon, Table as TableIcon } from "lucide-react";
 import { useAutoPageSize } from "@/hooks/useAutoPageSize";
@@ -84,26 +85,60 @@ export default function DisponibilityPage() {
   const [selected, setSelected] = useState(null);
   const [dragging, setDragging] = useState(false);
 
+  // 🔎 filtros
+  const [estado, setEstado] = useState(""); // "", "Reservado", "Pendiente", ...
+  const [fecha, setFecha] = useState([]); // v10: [Date] o []
+
   const pageSize = useAutoPageSize({ rowHeight: 72, header: 240, footer: 72 });
 
   // Medimos la altura del card de la tabla para igualarla en el panel
   const tableCardRef = useRef(null);
   const tableHeight = useElementHeight(tableCardRef);
 
+  // Exportaciones (con filtros actuales; implementa la lógica real luego)
+  const handleExportPdf = () => {
+    console.log("Exportar PDF con filtros:", { estado, fecha: fecha?.[0] });
+  };
+  const handleExportExcel = () => {
+    console.log("Exportar Excel con filtros:", { estado, fecha: fecha?.[0] });
+  };
+
   return (
     <div className="p-0 md:p-5">
       <div className="px-0 md:px-14 mx-auto my-0 md:my-2">
-        <Tabs value={tab} onValueChange={setTab} className="mt-4 space-y-4">
-          <TabsList>
-            <TabsTrigger value="tabla" className="gap-2">
+        <Tabs
+          value={tab}
+          onValueChange={setTab}
+          className="w-full mt-4 space-y-4"
+        >
+          {/* ⬇️ Full width y triggers distribuidos por igual */}
+          <TabsList className="w-full flex bg-muted p-1 rounded-xl [&>button]:flex-1 [&>button]:justify-center [&>button]:gap-2">
+            <TabsTrigger
+              value="tabla"
+              className="data-[state=active]:bg-background"
+            >
               <TableIcon className="size-4" /> Tabla
             </TabsTrigger>
-            <TabsTrigger value="calendario" className="gap-2">
+            <TabsTrigger
+              value="calendario"
+              className="data-[state=active]:bg-background"
+            >
               <CalendarIcon className="size-4" /> Calendario
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="tabla">
+            {/* 🔧 Toolbar de filtros + exportaciones */}
+            <DisponibilityToolbar
+              valueEstado={estado}
+              onChangeEstado={setEstado}
+              valueDate={fecha}
+              onChangeDate={setFecha}
+              onExportPdf={handleExportPdf}
+              onExportExcel={handleExportExcel}
+              className="mb-2"
+            />
+
             <div
               className={`grid grid-cols-1 md:grid-cols-[1fr_360px] gap-4 items-start ${
                 dragging ? "select-none" : ""
@@ -112,6 +147,8 @@ export default function DisponibilityPage() {
               <FacilitiesTable
                 ref={tableCardRef}
                 pageSize={pageSize}
+                estado={estado}
+                fecha={fecha}
                 onRowClick={(row) => setSelected(row)}
                 onRowDragStart={() => setDragging(true)}
                 onRowDragEnd={() => setDragging(false)}

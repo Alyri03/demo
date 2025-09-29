@@ -7,8 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-export default function ReservaDetailPanel({ height, data, catalog, onClear, onDropItem }) {
+// Modales / Dialogs reales
+import CancelModal from "./CancelModal";
+import PaymentDialog from "../../payments/components/PaymentDialog";
+import ReprogramModal from "./ReprogramModal";
+
+export default function ReservaDetailPanel({
+  height,
+  data,
+  catalog,
+  onClear,
+  onDropItem,
+}) {
   const [over, setOver] = useState(false);
+
+  // Estado de modales
+  const [openCancel, setOpenCancel] = useState(false);
+  const [openPayment, setOpenPayment] = useState(false);
+  const [openReprogram, setOpenReprogram] = useState(false);
 
   const nombre = data?.nombre || data?.ambiente;
   const meta = catalog?.[nombre] || {};
@@ -34,13 +50,43 @@ export default function ReservaDetailPanel({ height, data, catalog, onClear, onD
 
   const estado = data?.estado ?? "Reservado";
 
+  // Payload para el diálogo de pago
+  const pagoPayload = data
+    ? {
+        tipo: `Reserva de ${nombre}`,
+        descripcion: `${data?.fecha ?? ""}${horario ? " · " + horario : ""}`,
+        fecha: data?.fecha ?? "—",
+        monto: Number(data?.monto ?? meta?.price ?? 60), // fallback S/ 60
+      }
+    : null;
+
+  // Abrir los diálogos correctos
   const handle = (action) => {
+    if (!data) return;
+    if (action === "pagar") { setOpenPayment(true); return; }
+    if (action === "reprogramar") { setOpenReprogram(true); return; }
+    if (action === "cancelar") { setOpenCancel(true); return; }
+
     const base = `“${nombre}” — ${data?.fecha ?? ""} ${horario}`;
-    if (action === "pagar") toast.success(`Pagar ahora · ${base}`);
-    if (action === "reprogramar") toast.message(`Reprogramar · ${base}`);
-    if (action === "cancelar") toast.error(`Cancelar · ${base}`);
     if (action === "comprobante") toast.message(`Ver comprobante · ${base}`);
     if (action === "reservar") toast.success(`Reservar nuevamente · ${base}`);
+  };
+
+  // Confirms (demo)
+  const confirmCancel = () => {
+    toast.success(`Reserva cancelada: “${nombre}”`);
+    setOpenCancel(false);
+  };
+  const confirmPayment = ({ method, total } = {}) => {
+    toast.success(
+      `Pago ${method === "qr" ? "con QR" : "con tarjeta"} · ${total ? `Total S/ ${total}` : ""}`
+    );
+    setOpenPayment(false);
+  };
+  const confirmReprogram = ({ fecha, horaInicio, horaFin } = {}) => {
+    const nuevo = [fecha, [horaInicio, horaFin].filter(Boolean).join(" - ")].filter(Boolean).join(" · ");
+    toast.success(`Reprogramado: ${nuevo || "cambios aplicados"}`);
+    setOpenReprogram(false);
   };
 
   /* DnD: permitir soltar filas aquí */
@@ -74,7 +120,9 @@ export default function ReservaDetailPanel({ height, data, catalog, onClear, onD
           {image && (
             <div className="relative w-full aspect-[4/3] flex-none overflow-hidden">
               <img src={image} alt={nombre} className="h-full w-full object-cover" />
-              <Badge className="absolute left-3 top-3 bg-background/80 backdrop-blur border">{estado}</Badge>
+              <Badge className="absolute left-3 top-3 bg-background/80 backdrop-blur border">
+                {estado}
+              </Badge>
             </div>
           )}
 
@@ -89,8 +137,16 @@ export default function ReservaDetailPanel({ height, data, catalog, onClear, onD
             </div>
 
             <div className="text-sm text-muted-foreground">
-              {data?.fecha && (<div><span className="font-medium text-foreground">Fecha:</span> {data.fecha}</div>)}
-              {horario && (<div><span className="font-medium text-foreground">Horario:</span> {horario}</div>)}
+              {data?.fecha && (
+                <div>
+                  <span className="font-medium text-foreground">Fecha:</span> {data.fecha}
+                </div>
+              )}
+              {horario && (
+                <div>
+                  <span className="font-medium text-foreground">Horario:</span> {horario}
+                </div>
+              )}
             </div>
 
             {services.length > 0 && (
@@ -139,6 +195,28 @@ export default function ReservaDetailPanel({ height, data, catalog, onClear, onD
               Nota: También puedes soltar aquí otra reserva desde la tabla.
             </p>
           </div>
+
+          {/* ===== Modales / Dialogs ===== */}
+          <CancelModal
+            open={openCancel}
+            onClose={setOpenCancel}
+            reserva={data}
+            onConfirm={confirmCancel}
+          />
+
+          <PaymentDialog
+            open={openPayment}
+            onClose={setOpenPayment}
+            pago={pagoPayload}
+            onConfirm={confirmPayment}
+          />
+
+          <ReprogramModal
+            open={openReprogram}
+            onClose={setOpenReprogram}
+            reserva={data}
+            onConfirm={confirmReprogram}
+          />
         </>
       )}
     </div>

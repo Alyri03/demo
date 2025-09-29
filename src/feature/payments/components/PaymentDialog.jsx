@@ -17,45 +17,37 @@ import { CreditCard, QrCode, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-export default function PaymentDialog({ open, onClose, pago }) {
+/**
+ * props:
+ * - open: boolean
+ * - onClose: (open:boolean)=>void
+ * - pago?: { tipo: string, descripcion?: string, fecha?: string, monto?: number }
+ * - onConfirm?: ({ method: 'card'|'qr', total: number, cardId?: string }) => void
+ */
+export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
   const [accordionOpen, setAccordionOpen] = useState("tarjeta");
   const [selectedMethod, setSelectedMethod] = useState("tarjeta");
+  const [selectedCard, setSelectedCard] = useState("c1");
 
   // helpers
   const onlyDigits = (v) => (v || "").replace(/\D/g, "");
   const group4 = (s) => (s || "").replace(/(.{4})/g, "$1 ").trim();
-  const maskExceptLast4 = (digits) =>
-    (digits || "").replace(/\d(?=\d{4}$)/g, "*");
+  const maskExceptLast4 = (digits) => (digits || "").replace(/\d(?=\d{4}$)/g, "*");
   const detectBrand = (digits) => {
     if (/^4/.test(digits)) return "Visa";
-    if (/^(5[1-5]|2(2[2-9]\d|[3-6]\d{2}|7[01]\d|720))/.test(digits))
-      return "Mastercard";
+    if (/^(5[1-5]|2(2[2-9]\d|[3-6]\d{2}|7[01]\d|720))/.test(digits)) return "Mastercard";
     if (/^3[47]/.test(digits)) return "Amex";
     return "Tarjeta";
   };
 
   // tarjetas mock
   const [cards] = useState([
-    {
-      id: "c1",
-      brand: "Visa",
-      number: "4111111111111234",
-      expMonth: "12",
-      expYear: "26",
-      cvv: "123",
-    },
-    {
-      id: "c2",
-      brand: "Mastercard",
-      number: "5555555555555678",
-      expMonth: "08",
-      expYear: "28",
-      cvv: "123",
-    },
+    { id: "c1", brand: "Visa", number: "4111111111111234", expMonth: "12", expYear: "26", cvv: "123" },
+    { id: "c2", brand: "Mastercard", number: "5555555555555678", expMonth: "08", expYear: "28", cvv: "123" },
   ]);
-  const [selectedCard, setSelectedCard] = useState("c1");
 
-  if (!pago) return null;
+  // Pago con fallbacks si no llega "pago"
+  const pg = pago ?? { tipo: "Reserva", descripcion: "", fecha: "—", monto: 0 };
 
   const SelectedPill = ({ children }) => (
     <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
@@ -68,10 +60,7 @@ export default function PaymentDialog({ open, onClose, pago }) {
     "relative cursor-pointer rounded-lg border bg-white transition hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300 focus-visible:outline-offset-2";
   const selectedStyles = "border-emerald-300 bg-emerald-50 shadow-sm";
   const SelectedAccent = () => (
-    <span
-      aria-hidden
-      className="absolute left-0 top-0 h-full w-1.5 rounded-l-lg bg-emerald-500/80"
-    />
+    <span aria-hidden className="absolute left-0 top-0 h-full w-1.5 rounded-l-lg bg-emerald-500/80" />
   );
 
   const renderCard = (card) => {
@@ -90,7 +79,6 @@ export default function PaymentDialog({ open, onClose, pago }) {
       >
         {isSelected && <SelectedAccent />}
 
-        {/* Header */}
         <div className="flex items-center gap-3">
           <div className="rounded-md bg-indigo-50 p-2">
             <CreditCard className="h-6 w-6 text-indigo-600" />
@@ -101,30 +89,27 @@ export default function PaymentDialog({ open, onClose, pago }) {
             </h4>
             <p className="text-xs text-slate-500">Tarjeta registrada</p>
           </div>
-          {isSelected && (
-            <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />
-          )}
+          {isSelected && <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />}
         </div>
 
-        {/* Solo lectura */}
         <div className="grid grid-cols-2 gap-y-2 text-sm">
           <span className="font-medium text-slate-700">Número:</span>
-          <span className="font-mono tracking-widest text-slate-800">
-            {maskedDisplay}
-          </span>
+          <span className="font-mono tracking-widest text-slate-800">{maskedDisplay}</span>
 
           <span className="font-medium text-slate-700">Vencimiento:</span>
-          <span className="text-slate-800">
-            {card.expMonth}/{card.expYear}
-          </span>
+          <span className="text-slate-800">{card.expMonth}/{card.expYear}</span>
 
           <span className="font-medium text-slate-700">CVV:</span>
-          <span className="text-slate-800">
-            {"*".repeat(brandForView === "Amex" ? 4 : 3)}
-          </span>
+          <span className="text-slate-800">{"*".repeat(brandForView === "Amex" ? 4 : 3)}</span>
         </div>
       </div>
     );
+  };
+
+  const handlePay = () => {
+    const method = selectedMethod === "qr" ? "qr" : "card";
+    onConfirm?.({ method, total: pg.monto, cardId: method === "card" ? selectedCard : undefined });
+    onClose(false);
   };
 
   return (
@@ -133,27 +118,23 @@ export default function PaymentDialog({ open, onClose, pago }) {
         <DialogHeader>
           <DialogTitle>Realizar Pago</DialogTitle>
           <DialogDescription>
-            Estás pagando <strong>{pago.tipo}</strong>
+            Estás pagando <strong>{pg.tipo}</strong>
             <br />
-            <span className="text-sm text-muted-foreground">
-              {pago.descripcion}
-            </span>
+            <span className="text-sm text-muted-foreground">{pg.descripcion}</span>
           </DialogDescription>
         </DialogHeader>
 
-        {/* Detalle del monto */}
         <div className="my-4 rounded-md border border-slate-200 bg-muted/30 p-4">
           <div className="flex justify-between text-sm">
             <span className="font-medium text-slate-700">Fecha:</span>
-            <span className="text-slate-800">{pago.fecha}</span>
+            <span className="text-slate-800">{pg.fecha}</span>
           </div>
           <div className="mt-1 flex justify-between text-sm">
             <span className="font-medium text-slate-700">Monto:</span>
-            <span className="font-bold text-emerald-700">S/ {pago.monto}</span>
+            <span className="font-bold text-emerald-700">S/ {pg.monto}</span>
           </div>
         </div>
 
-        {/* Métodos */}
         <Accordion
           type="single"
           collapsible
@@ -162,18 +143,11 @@ export default function PaymentDialog({ open, onClose, pago }) {
           className="w-full"
         >
           <AccordionItem value="tarjeta">
-            <AccordionTrigger
-              onClick={() => setSelectedMethod("tarjeta")}
-              className="text-left"
-            >
+            <AccordionTrigger onClick={() => setSelectedMethod("tarjeta")} className="text-left">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-indigo-600" />
-                <span className="text-slate-800">
-                  Tarjeta de crédito o débito
-                </span>
-                {selectedMethod === "tarjeta" && (
-                  <SelectedPill>Seleccionado</SelectedPill>
-                )}
+                <span className="text-slate-800">Tarjeta de crédito o débito</span>
+                {selectedMethod === "tarjeta" && <SelectedPill>Seleccionado</SelectedPill>}
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -186,16 +160,11 @@ export default function PaymentDialog({ open, onClose, pago }) {
           </AccordionItem>
 
           <AccordionItem value="qr">
-            <AccordionTrigger
-              onClick={() => setSelectedMethod("qr")}
-              className="text-left"
-            >
+            <AccordionTrigger onClick={() => setSelectedMethod("qr")} className="text-left">
               <div className="flex items-center gap-2">
                 <QrCode className="h-5 w-5 text-indigo-600" />
                 <span className="text-slate-800">Yape o Plin (QR)</span>
-                {selectedMethod === "qr" && (
-                  <SelectedPill>Seleccionado</SelectedPill>
-                )}
+                {selectedMethod === "qr" && <SelectedPill>Seleccionado</SelectedPill>}
               </div>
             </AccordionTrigger>
             <AccordionContent>
@@ -211,12 +180,12 @@ export default function PaymentDialog({ open, onClose, pago }) {
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={() => onClose(false)} // cerrar explícito
             className="border-slate-200 hover:bg-slate-50"
           >
             Cancelar
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">
+          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handlePay}>
             {selectedMethod === "qr" ? "Escanear y confirmar" : "Pagar ahora"}
           </Button>
         </DialogFooter>
