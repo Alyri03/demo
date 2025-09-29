@@ -3,15 +3,15 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavProjects } from "./nav-projects";
-import { MoreVertical, Eye, Settings, ChevronDown } from "lucide-react";
-
+import { MoreVertical } from "lucide-react";
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" className="group border-r">
       <SidebarHeader className="px-4 pt-4">
-        <div className="flex items-center justify-between">
+        <div className="flex h-12 items-center justify-between">
           <span className="text-xs font-semibold tracking-wider text-muted-foreground">
             LOGOTIPO
           </span>
@@ -19,14 +19,14 @@ export function AppSidebar() {
             <MoreVertical className="h-4 w-4" />
           </button>
         </div>
-       
       </SidebarHeader>
 
-      <SidebarContent>
+      {/* ¡Sin padding lateral en colapsado! */}
+      <SidebarContent className="px-3 group-data-[collapsible=icon]:px-0">
         <NavProjects />
       </SidebarContent>
 
-      
+      <SidebarRail topClass="top-14" />
     </Sidebar>
   );
 }

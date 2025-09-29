@@ -26,7 +26,6 @@ export default function Layout() {
       <AppSidebar />
       <SidebarInset>
         <main>
-          <SidebarTrigger />
           <div style={{ padding: 20 }}>
             <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 border-b pb-2">
               {title}

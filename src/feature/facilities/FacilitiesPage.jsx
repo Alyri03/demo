@@ -4,6 +4,20 @@ import SearchFacilities from "./components/SearchFacilities";
 import FacilitiesCard from "./components/FacilitiesCard";
 import DisponibilityModal from "./components/DisponibilityModal";
 
+// ⬇️ Imágenes demo como constantes
+const IMG_FUTBOL =
+  "https://v0-ui-redesign-pearl.vercel.app/soccer-field-outdoor-grass.jpg";
+const IMG_ELEGANCE =
+  "https://v0-ui-redesign-pearl.vercel.app/elegant-event-hall-interior.jpg";
+const IMG_JARDIN =
+  "https://v0-ui-redesign-pearl.vercel.app/beautiful-garden-outdoor-event-space.jpg";
+const IMG_PARRILLAS =
+  "https://v0-ui-redesign-pearl.vercel.app/outdoor-barbecue-grill-area.jpg";
+const IMG_CONFERENCIAS =
+  "https://v0-ui-redesign-pearl.vercel.app/modern-conference-room-interior.jpg";
+const IMG_TENIS =
+  "https://v0-ui-redesign-pearl.vercel.app/outdoor-tennis-court.png";
+
 export default function FacilitiesPage() {
   const [filters, setFilters] = useState({
     category: "Todos",
@@ -19,7 +33,7 @@ export default function FacilitiesPage() {
 
   const facilities = [
     {
-      image: "/salon-elegance.jpg",
+      image: IMG_ELEGANCE,
       title: "Salón Elegance",
       category: "Salones",
       capacity: 40,
@@ -34,7 +48,7 @@ export default function FacilitiesPage() {
       availableToday: true,
     },
     {
-      image: "/cancha-futbol.jpg",
+      image: IMG_FUTBOL,
       title: "Cancha Fútbol 1",
       category: "Canchas",
       capacity: 22,
@@ -48,7 +62,7 @@ export default function FacilitiesPage() {
       nextAvailability: "21/09",
     },
     {
-      image: "/jardin-primavera.jpg",
+      image: IMG_JARDIN,
       title: "Jardín Primavera",
       category: "Jardines",
       capacity: 60,
@@ -61,7 +75,7 @@ export default function FacilitiesPage() {
       availableToday: true,
     },
     {
-      image: "/parrilla-familiar.jpg",
+      image: IMG_PARRILLAS,
       title: "Parrilla Familiar",
       category: "Parrillas",
       capacity: 15,
@@ -74,7 +88,7 @@ export default function FacilitiesPage() {
       availableToday: true,
     },
     {
-      image: "/salon-ejecutivo.jpg",
+      image: IMG_CONFERENCIAS,
       title: "Salón Ejecutivo",
       category: "Salones",
       capacity: 25,
@@ -89,7 +103,7 @@ export default function FacilitiesPage() {
       nextAvailability: "22/09",
     },
     {
-      image: "/cancha-tenis.jpg",
+      image: IMG_TENIS,
       title: "Cancha Tenis Club",
       category: "Canchas",
       capacity: 4,
@@ -99,10 +113,9 @@ export default function FacilitiesPage() {
       price: 30,
       oldPrice: 60,
       availableToday: true,
-      
     },
     {
-      image: "/zona-bbq.jpg",
+      image: IMG_PARRILLAS,
       title: "Zona BBQ Deluxe",
       category: "Parrillas",
       capacity: 20,
@@ -116,7 +129,7 @@ export default function FacilitiesPage() {
       nextAvailability: "24/09",
     },
     {
-      image: "/jardin-eventos.jpg",
+      image: IMG_JARDIN,
       title: "Jardín de Eventos",
       category: "Jardines",
       capacity: 80,
