@@ -26,12 +26,11 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function NavUser() {
-  // Datos de usuario fijo para mostrar en la UI
   const user = {
-    name: "Luis Martínez",
+    name: "Luis Enrique",
     email: "luis@prueba.com",
     avatar: "",
-    initials: "LM",
+    initials: "LE",
     role: "Administrador",
     active: true,
   };
@@ -39,7 +38,6 @@ export function NavUser() {
   const [open, setOpen] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
 
-  // Simulación del logout (solo cierra el modal)
   const handleConfirmLogout = () => {
     setOpen(false);
     alert("Sesión cerrada (fake)");
@@ -59,7 +57,7 @@ export function NavUser() {
                   {user.avatar ? (
                     <AvatarImage src={user.avatar} alt={user.name} />
                   ) : null}
-                  <AvatarFallback className="bg-gray-700 text-white dark:text-black dark:bg-white">
+                  <AvatarFallback className="bg-[#5951e6] text-white">
                     {user.initials}
                   </AvatarFallback>
                 </Avatar>
@@ -70,6 +68,7 @@ export function NavUser() {
                 <ChevronsUpDown className="ml-auto size-4" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent
               className="min-w-56 rounded-lg"
               side="right"
@@ -82,7 +81,7 @@ export function NavUser() {
                     {user.avatar ? (
                       <AvatarImage src={user.avatar} alt={user.name} />
                     ) : null}
-                    <AvatarFallback className="bg-gray-700 text-white dark:text-black dark:bg-white">
+                    <AvatarFallback className="bg-[#5951e6] text-white">
                       {user.initials}
                     </AvatarFallback>
                   </Avatar>
@@ -92,6 +91,7 @@ export function NavUser() {
                   </div>
                 </div>
               </DropdownMenuLabel>
+
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => setOpenProfile(true)}>
@@ -141,7 +141,7 @@ export function NavUser() {
               {user.avatar ? (
                 <AvatarImage src={user.avatar} alt={user.name} />
               ) : null}
-              <AvatarFallback className="bg-gray-700 text-white dark:text-black dark:bg-white">
+              <AvatarFallback className="bg-[#5951e6] text-white">
                 {user.initials}
               </AvatarFallback>
             </Avatar>
