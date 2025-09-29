@@ -40,24 +40,34 @@ export default function FacilitiesCard({
   const badgeClasses = "flex items-center gap-1 h-6 px-2 py-0 text-xs";
 
   return (
-    <div className="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden relative flex flex-col">
+    <div
+      className="
+        rounded-xl border bg-card text-card-foreground
+        shadow-sm hover:shadow-md transition
+        overflow-hidden relative flex flex-col
+      "
+    >
       {/* --- Imagen --- */}
       <div
-        className="relative h-52 w-full bg-gray-200 flex items-center justify-center"
+        className="relative h-52 w-full bg-muted flex items-center justify-center"
         style={{
           backgroundImage: image ? `url(${image})` : "none",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
-        {!image && <span className="text-gray-400 text-sm">Imagen</span>}
+        {!image && (
+          <span className="text-sm text-muted-foreground">Imagen</span>
+        )}
 
         {/* Corazón favorito */}
         <button
           onClick={() => setIsFavorite(!isFavorite)}
-          className={`absolute top-3 left-3 rounded-full p-2 bg-white shadow ${
-            isFavorite ? "text-red-500" : "text-gray-700"
-          }`}
+          className={`
+            absolute top-3 left-3 rounded-full p-2
+            bg-background/80 backdrop-blur-sm border border-border
+            ${isFavorite ? "text-red-500" : "text-muted-foreground"}
+          `}
         >
           <Heart
             className="w-5 h-5"
@@ -67,12 +77,12 @@ export default function FacilitiesCard({
 
         {/* Tags */}
         {availableToday ? (
-          <Badge className="absolute top-3 right-3 bg-green-500 text-white flex items-center gap-1">
+          <Badge className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950">
             <CalendarCheck className="w-3 h-3" />
             Disponible Hoy
           </Badge>
         ) : nextAvailability ? (
-          <Badge className="absolute top-3 right-3 bg-orange-500 text-white flex items-center gap-1">
+          <Badge className="absolute top-3 right-3 flex items-center gap-1 bg-orange-600 text-white dark:bg-orange-500 dark:text-orange-950">
             <Clock className="w-3 h-3" />
             Próx.: {nextAvailability}
           </Badge>
@@ -80,14 +90,18 @@ export default function FacilitiesCard({
 
         <Badge
           variant="outline"
-          className="absolute bottom-3 right-3 bg-white/80 backdrop-blur-sm text-gray-700 flex items-center gap-1"
+          className="
+            absolute bottom-3 right-3 flex items-center gap-1
+            bg-background/80 backdrop-blur-sm text-foreground/80
+            border border-border
+          "
         >
           <MapPin className="w-3 h-3" />
           {outdoor ? "Exterior" : "Interior"}
         </Badge>
 
         {discountSocio && (
-          <Badge className="absolute bottom-3 left-3 bg-blue-600 text-white flex items-center gap-1">
+          <Badge className="absolute bottom-3 left-3 bg-indigo-600 text-white dark:bg-indigo-500 dark:text-indigo-950">
             {discountSocio}
           </Badge>
         )}
@@ -98,7 +112,7 @@ export default function FacilitiesCard({
         <div>
           <h3 className="font-semibold text-lg">{title}</h3>
 
-          <div className="flex flex-wrap gap-2 text-gray-700 mt-2 min-h-[48px]">
+          <div className="flex flex-wrap gap-2 mt-2 min-h-[48px]">
             <Badge variant="secondary" className={badgeClasses}>
               <Users className="w-3 h-3" /> Hasta {capacity}
             </Badge>
@@ -135,20 +149,20 @@ export default function FacilitiesCard({
           </div>
 
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-xl font-bold text-gray-900">S/ {price}</span>
+            <span className="text-xl font-bold">S/ {price}</span>
             {oldPrice && (
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-sm text-muted-foreground line-through">
                 S/ {oldPrice}
               </span>
             )}
-            <span className="text-xs text-gray-500">por hora</span>
+            <span className="text-xs text-muted-foreground">por hora</span>
           </div>
         </div>
 
-        {/* Botón que abre modal */}
+        {/* Botón abre modal */}
         <Button
-          className="w-full flex items-center gap-2 mt-4 bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#5951e6]"
           onClick={onOpenModal}
+          className="w-full mt-4 bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#7c74f1]"
         >
           <Calendar className="w-4 h-4" />
           Ver Disponibilidad

@@ -6,19 +6,41 @@ import FacilitiesPage from "@/feature/facilities/FacilitiesPage";
 import DisponibilityPage from "@/feature/disponibility/DisponibilityPage";
 import PaymentsPage from "@/feature/payments/PaymentsPage";
 import LoginPage from "./feature/LoginPage";
+import DashboardPage from "@/feature/dashboard/DashboardPage"; 
+
+// helpers de rol
+const getRole = () =>
+  (typeof window !== "undefined" && localStorage.getItem("role")) || null;
+
+function RequireRole({ allow = [], children }) {
+  const role = getRole();
+  if (!role) return <Navigate to="/login" replace />;
+  if (allow.length && !allow.includes(role)) {
+    return <Navigate to={role === "ADMIN" ? "/admin" : "/inicio"} replace />;
+  }
+  return children;
+}
 
 function PerfilPage() {
   return <div>Contenido de Perfil</div>;
 }
 
+function FallbackRedirect() {
+  const role = getRole();
+  return <Navigate to={role === "ADMIN" ? "/admin" : "/inicio"} replace />;
+}
+
 const router = createBrowserRouter([
-  // 📌 Login SIN layout (pantalla completa)
   { path: "/login", element: <LoginPage /> },
 
-  // 📌 Resto de la app CON layout (sidebar, etc.)
+  // SOCIO
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <RequireRole allow={["SOCIO"]}>
+        <Layout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <Navigate to="/inicio" replace /> },
       { path: "inicio", element: <MainPage /> },
@@ -29,8 +51,20 @@ const router = createBrowserRouter([
     ],
   },
 
-  // (Opcional) 404 simple
-  { path: "*", element: <Navigate to="/inicio" replace /> },
+  // ADMIN (Dashboard)
+  {
+    path: "/admin",
+    element: (
+      <RequireRole allow={["ADMIN"]}>
+        <Layout />
+      </RequireRole>
+    ),
+    children: [
+      { index: true, element: <DashboardPage /> }, // 👈 usa la página nueva
+    ],
+  },
+
+  { path: "*", element: <FallbackRedirect /> },
 ]);
 
 export default function App() {

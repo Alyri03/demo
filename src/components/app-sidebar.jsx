@@ -9,7 +9,9 @@ import {
 import { NavProjects } from "./nav-projects";
 import { NavUser } from "./nav-user";
 import { MoreVertical } from "lucide-react";
-import ClubLogo from "@/assets/club-logo.svg"; // ⬅️ tu SVG
+import ClubLogo from "@/assets/club-logo.svg";
+
+
 
 export function AppSidebar() {
   return (
@@ -46,7 +48,11 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="mt-auto border-t p-2 group-data-[collapsible=icon]:p-2">
-        <NavUser />
+        {/* Cambiar modo (si está colapsado, solo queda el ícono) */}
+        
+        <div className="pt-2">
+          <NavUser />
+        </div>
       </SidebarFooter>
 
       {/* Alineado con h-12 del header */}

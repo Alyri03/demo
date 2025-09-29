@@ -1,3 +1,4 @@
+// src/feature/payments/components/PaymentDialog.jsx
 import {
   Dialog,
   DialogContent,
@@ -50,17 +51,27 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
   const pg = pago ?? { tipo: "Reserva", descripcion: "", fecha: "—", monto: 0 };
 
   const SelectedPill = ({ children }) => (
-    <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+    <span className="
+      ml-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium
+      bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/60
+      dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-400/30
+    ">
       <CheckCircle2 className="h-3.5 w-3.5" />
       {children}
     </span>
   );
 
-  const cardBase =
-    "relative cursor-pointer rounded-lg border bg-white transition hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300 focus-visible:outline-offset-2";
-  const selectedStyles = "border-emerald-300 bg-emerald-50 shadow-sm";
+  const cardBase = `
+    relative cursor-pointer rounded-lg border bg-card text-card-foreground
+    transition hover:shadow-sm focus-visible:outline-none focus-visible:ring-2
+    focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+  `;
+  const selectedStyles = `
+    border-emerald-300/70 bg-emerald-50 shadow-sm
+    dark:border-emerald-400/50 dark:bg-emerald-500/10
+  `;
   const SelectedAccent = () => (
-    <span aria-hidden className="absolute left-0 top-0 h-full w-1.5 rounded-l-lg bg-emerald-500/80" />
+    <span aria-hidden className="absolute left-0 top-0 h-full w-1.5 rounded-l-lg bg-emerald-500/80 dark:bg-emerald-400/70" />
   );
 
   const renderCard = (card) => {
@@ -80,27 +91,27 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
         {isSelected && <SelectedAccent />}
 
         <div className="flex items-center gap-3">
-          <div className="rounded-md bg-indigo-50 p-2">
-            <CreditCard className="h-6 w-6 text-indigo-600" />
+          <div className="rounded-md p-2 bg-indigo-50 dark:bg-indigo-500/15">
+            <CreditCard className="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-slate-900">
+            <h4 className="text-sm font-semibold">
               {card.brand} terminada en {digits.slice(-4)}
             </h4>
-            <p className="text-xs text-slate-500">Tarjeta registrada</p>
+            <p className="text-xs text-muted-foreground">Tarjeta registrada</p>
           </div>
-          {isSelected && <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />}
+          {isSelected && <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
         </div>
 
         <div className="grid grid-cols-2 gap-y-2 text-sm">
-          <span className="font-medium text-slate-700">Número:</span>
-          <span className="font-mono tracking-widest text-slate-800">{maskedDisplay}</span>
+          <span className="font-medium text-muted-foreground">Número:</span>
+          <span className="font-mono tracking-widest">{maskedDisplay}</span>
 
-          <span className="font-medium text-slate-700">Vencimiento:</span>
-          <span className="text-slate-800">{card.expMonth}/{card.expYear}</span>
+          <span className="font-medium text-muted-foreground">Vencimiento:</span>
+          <span>{card.expMonth}/{card.expYear}</span>
 
-          <span className="font-medium text-slate-700">CVV:</span>
-          <span className="text-slate-800">{"*".repeat(brandForView === "Amex" ? 4 : 3)}</span>
+          <span className="font-medium text-muted-foreground">CVV:</span>
+          <span>{"*".repeat(brandForView === "Amex" ? 4 : 3)}</span>
         </div>
       </div>
     );
@@ -114,24 +125,24 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Realizar Pago</DialogTitle>
-          <DialogDescription>
-            Estás pagando <strong>{pg.tipo}</strong>
+          <DialogDescription className="text-muted-foreground">
+            Estás pagando <strong className="text-foreground">{pg.tipo}</strong>
             <br />
-            <span className="text-sm text-muted-foreground">{pg.descripcion}</span>
+            <span className="text-sm">{pg.descripcion}</span>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="my-4 rounded-md border border-slate-200 bg-muted/30 p-4">
+        <div className="my-4 rounded-md border border-border bg-muted/30 p-4">
           <div className="flex justify-between text-sm">
-            <span className="font-medium text-slate-700">Fecha:</span>
-            <span className="text-slate-800">{pg.fecha}</span>
+            <span className="font-medium text-muted-foreground">Fecha:</span>
+            <span>{pg.fecha}</span>
           </div>
           <div className="mt-1 flex justify-between text-sm">
-            <span className="font-medium text-slate-700">Monto:</span>
-            <span className="font-bold text-emerald-700">S/ {pg.monto}</span>
+            <span className="font-medium text-muted-foreground">Monto:</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">S/ {pg.monto}</span>
           </div>
         </div>
 
@@ -145,8 +156,8 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
           <AccordionItem value="tarjeta">
             <AccordionTrigger onClick={() => setSelectedMethod("tarjeta")} className="text-left">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-indigo-600" />
-                <span className="text-slate-800">Tarjeta de crédito o débito</span>
+                <CreditCard className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+                <span>Tarjeta de crédito o débito</span>
                 {selectedMethod === "tarjeta" && <SelectedPill>Seleccionado</SelectedPill>}
               </div>
             </AccordionTrigger>
@@ -162,15 +173,15 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
           <AccordionItem value="qr">
             <AccordionTrigger onClick={() => setSelectedMethod("qr")} className="text-left">
               <div className="flex items-center gap-2">
-                <QrCode className="h-5 w-5 text-indigo-600" />
-                <span className="text-slate-800">Yape o Plin (QR)</span>
+                <QrCode className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
+                <span>Yape o Plin (QR)</span>
                 {selectedMethod === "qr" && <SelectedPill>Seleccionado</SelectedPill>}
               </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="mt-3 flex justify-center">
-                <div className="flex h-32 w-32 items-center justify-center rounded-md border border-slate-200 bg-muted">
-                  <span className="text-xs text-slate-500">[ QR ]</span>
+                <div className="flex h-32 w-32 items-center justify-center rounded-md border border-border bg-muted">
+                  <span className="text-xs text-muted-foreground">[ QR ]</span>
                 </div>
               </div>
             </AccordionContent>
@@ -180,12 +191,15 @@ export default function PaymentDialog({ open, onClose, pago, onConfirm }) {
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onClose(false)} // cerrar explícito
-            className="border-slate-200 hover:bg-slate-50"
+            onClick={() => onClose(false)}
+            className="border-border hover:bg-muted"
           >
             Cancelar
           </Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handlePay}>
+          <Button
+            className="bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-emerald-500"
+            onClick={handlePay}
+          >
             {selectedMethod === "qr" ? "Escanear y confirmar" : "Pagar ahora"}
           </Button>
         </DialogFooter>

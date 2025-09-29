@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+// src/feature/disponibility/components/PaymentsTable.jsx
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -116,16 +117,15 @@ export default function PaymentsTable() {
   const pageSize = 5;
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(pagos.length / pageSize));
-
-  // Corrige página si cambia el total (por si en el futuro hay filtros)
-  if (page > totalPages) setPage(totalPages);
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const pageData = useMemo(() => {
     const start = (page - 1) * pageSize;
     return pagos.slice(start, start + pageSize);
   }, [pagos, page]);
 
-  // Genera los números a mostrar con elipsis (1 … p-1 p p+1 … N)
   const pageNumbers = useMemo(() => {
     const nums = [];
     if (totalPages <= 6) {
@@ -133,73 +133,68 @@ export default function PaymentsTable() {
       return nums;
     }
     nums.push(1);
-    if (page > 3) nums.push("ellipsis-left");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+    if (page > 3) nums.push("…L");
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    )
       nums.push(i);
-    }
-    if (page < totalPages - 2) nums.push("ellipsis-right");
+    if (page < totalPages - 2) nums.push("…R");
     nums.push(totalPages);
     return nums;
   }, [page, totalPages]);
 
-  // Colores de estado
+  // Badges por estado con variantes dark
   const getBadgeClass = (estado) => {
     switch (estado) {
       case "Pagado":
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-emerald-100 text-emerald-800 ring-1 ring-inset ring-emerald-200/60 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-400/30";
       case "Pendiente":
-        return "bg-amber-100 text-amber-700";
+        return "bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200/60 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-400/30";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-muted text-muted-foreground ring-1 ring-inset ring-border";
     }
   };
 
-  // Íconos según tipo
   const getIconByTipo = (tipo) => {
     switch (tipo) {
       case "Membresía":
         return (
-          <div className="rounded-md bg-emerald-100 p-2">
-            <CreditCard className="h-5 w-5 text-emerald-600" />
+          <div className="rounded-md p-2 bg-emerald-100 dark:bg-emerald-500/15">
+            <CreditCard className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
           </div>
         );
       case "Reserva":
         return (
-          <div className="rounded-md bg-indigo-100 p-2">
-            <CalendarDays className="h-5 w-5 text-indigo-600" />
+          <div className="rounded-md p-2 bg-indigo-100 dark:bg-indigo-500/15">
+            <CalendarDays className="h-5 w-5 text-indigo-600 dark:text-indigo-300" />
           </div>
         );
       default:
         return (
-          <div className="rounded-md bg-gray-100 p-2">
-            <FileText className="h-5 w-5 text-gray-600" />
+          <div className="rounded-md p-2 bg-muted">
+            <FileText className="h-5 w-5 text-muted-foreground" />
           </div>
         );
     }
   };
 
-  // Acciones
   const onAction = (key, pago) => {
     const base = `“${pago.descripcion}” (${pago.fecha})`;
-    switch (key) {
-      case "ver":
-        toast.info(`Detalle: ${base}`);
-        break;
-      case "pagar":
-        setSelectedPago(pago);
-        setOpenDialog(true);
-        break;
-      case "comprobante":
-        toast.success(`Mostrar comprobante de ${base}`);
-        break;
-      default:
-        toast(`Acción: ${key}`);
+    if (key === "ver") return toast.info(`Detalle: ${base}`);
+    if (key === "pagar") {
+      setSelectedPago(pago);
+      return setOpenDialog(true);
     }
+    if (key === "comprobante")
+      return toast.success(`Mostrar comprobante de ${base}`);
+    toast(`Acción: ${key}`);
   };
 
   return (
     <>
-      <div className="mt-6 overflow-hidden rounded-xl border bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="border-b bg-muted/40">
@@ -229,7 +224,10 @@ export default function PaymentsTable() {
 
           <TableBody>
             {pageData.map((pago) => (
-              <TableRow key={pago.id} className="transition-colors hover:bg-muted/20">
+              <TableRow
+                key={pago.id}
+                className="transition-colors hover:bg-muted/20"
+              >
                 {/* DETALLE */}
                 <TableCell className="flex items-start gap-3 py-4">
                   {getIconByTipo(pago.tipo)}
@@ -242,7 +240,7 @@ export default function PaymentsTable() {
                 </TableCell>
 
                 {/* FECHA */}
-                <TableCell className="whitespace-nowrap text-sm font-medium text-gray-700">
+                <TableCell className="whitespace-nowrap text-sm font-medium">
                   {pago.fecha}
                 </TableCell>
 
@@ -252,47 +250,51 @@ export default function PaymentsTable() {
                 </TableCell>
 
                 {/* REFERENCIA */}
-                <TableCell className="text-sm text-gray-700">{pago.referencia}</TableCell>
+                <TableCell className="text-sm">{pago.referencia}</TableCell>
 
                 {/* MONTO */}
-                <TableCell className="whitespace-nowrap text-right font-bold text-gray-900">
+                <TableCell className="whitespace-nowrap text-right font-bold">
                   S/ {pago.monto}
                 </TableCell>
 
                 {/* ESTADO */}
                 <TableCell className="text-center">
-                  <Badge className={`rounded-full px-3 py-1.5 text-xs font-medium ${getBadgeClass(pago.estado)}`}>
+                  <Badge
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium ${getBadgeClass(
+                      pago.estado
+                    )}`}
+                  >
                     {pago.estado}
                   </Badge>
                 </TableCell>
 
-                {/* ACCIONES (Opción A) */}
+                {/* ACCIONES */}
                 <TableCell className="text-center">
                   <div className="flex justify-center gap-2">
                     <TooltipProvider>
-                      {/* Ver Detalle — neutro */}
+                      {/* Ver Detalle */}
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
                             size="icon"
                             variant="outline"
-                            className="h-8 w-8 rounded-lg border-slate-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-300"
+                            className="h-8 w-8 rounded-lg border-border hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
                             onClick={() => onAction("ver", pago)}
                             aria-label="Ver detalle"
                           >
-                            <Eye className="h-4 w-4 text-slate-600" />
+                            <Eye className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Ver detalle</TooltipContent>
                       </Tooltip>
 
-                      {/* Pagar ahora — CTA sólido */}
+                      {/* Pagar ahora */}
                       {pago.estado === "Pendiente" && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               size="icon"
-                              className="h-8 w-8 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-400"
+                              className="h-8 w-8 rounded-lg bg-emerald-600 text-emerald-50 hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-400"
                               onClick={() => onAction("pagar", pago)}
                               aria-label="Pagar ahora"
                             >
@@ -303,18 +305,18 @@ export default function PaymentsTable() {
                         </Tooltip>
                       )}
 
-                      {/* Ver Comprobante — neutro con tinte */}
+                      {/* Ver Comprobante */}
                       {pago.estado === "Pagado" && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
                               size="icon"
                               variant="outline"
-                              className="h-8 w-8 rounded-lg border-sky-200 hover:bg-sky-50 focus-visible:ring-2 focus-visible:ring-sky-300"
+                              className="h-8 w-8 rounded-lg border-sky-300/60 hover:bg-sky-500/10 focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-sky-400/40"
                               onClick={() => onAction("comprobante", pago)}
                               aria-label="Ver comprobante"
                             >
-                              <FileText className="h-4 w-4 text-sky-700" />
+                              <FileText className="h-4 w-4 text-sky-700 dark:text-sky-300" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>Ver comprobante</TooltipContent>
@@ -329,11 +331,12 @@ export default function PaymentsTable() {
         </Table>
 
         {/* Footer de paginación */}
-        <div className="flex items-center justify-between gap-4 border-t px-4 py-3">
+        <div className="flex items-center justify-between gap-4 border-t px-4 py-3 bg-card">
           <p className="text-xs text-muted-foreground">
             Mostrando{" "}
             <span className="font-medium">
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, pagos.length)}
+              {(page - 1) * pageSize + 1}–
+              {Math.min(page * pageSize, pagos.length)}
             </span>{" "}
             de <span className="font-medium">{pagos.length}</span> registros
           </p>
@@ -379,7 +382,9 @@ export default function PaymentsTable() {
                     e.preventDefault();
                     if (page < totalPages) setPage(page + 1);
                   }}
-                  className={page === totalPages ? "pointer-events-none opacity-40" : ""}
+                  className={
+                    page === totalPages ? "pointer-events-none opacity-40" : ""
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -388,7 +393,11 @@ export default function PaymentsTable() {
       </div>
 
       {/* Dialog de pago */}
-      <PaymentDialog open={openDialog} onClose={setOpenDialog} pago={selectedPago} />
+      <PaymentDialog
+        open={openDialog}
+        onClose={setOpenDialog}
+        pago={selectedPago}
+      />
     </>
   );
 }

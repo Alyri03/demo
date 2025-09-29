@@ -1,5 +1,8 @@
+// src/components/nav-user.jsx
 import { useState } from "react";
-import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
+import {
+  BadgeCheck, ChevronsUpDown, LogOut, Sun, Moon, Laptop, Check,
+} from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,6 +27,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/components/theme-provider";
 
 export function NavUser() {
   const user = {
@@ -37,6 +41,8 @@ export function NavUser() {
 
   const [open, setOpen] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
+
+  const { theme, setTheme } = useTheme();
 
   const handleConfirmLogout = () => {
     setOpen(false);
@@ -54,9 +60,7 @@ export function NavUser() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar>
-                  {user.avatar ? (
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                  ) : null}
+                  {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
                   <AvatarFallback className="bg-[#5951e6] text-white">
                     {user.initials}
                   </AvatarFallback>
@@ -70,7 +74,7 @@ export function NavUser() {
             </DropdownMenuTrigger>
 
             <DropdownMenuContent
-              className="min-w-56 rounded-lg"
+              className="min-w-60 rounded-lg"
               side="right"
               align="end"
               sideOffset={4}
@@ -78,9 +82,7 @@ export function NavUser() {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
-                    {user.avatar ? (
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                    ) : null}
+                    {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
                     <AvatarFallback className="bg-[#5951e6] text-white">
                       {user.initials}
                     </AvatarFallback>
@@ -93,15 +95,38 @@ export function NavUser() {
               </DropdownMenuLabel>
 
               <DropdownMenuSeparator />
+
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={() => setOpenProfile(true)}>
-                  <BadgeCheck />
+                  <BadgeCheck className="mr-2 h-4 w-4" />
                   Cuenta
                 </DropdownMenuItem>
               </DropdownMenuGroup>
+
+              {/* --- Apariencia / Tema --- */}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Apariencia</DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
+                  <Sun className="h-4 w-4" />
+                  Claro
+                  {theme === "light" && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
+                  <Moon className="h-4 w-4" />
+                  Oscuro
+                  {theme === "dark" && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
+                  <Laptop className="h-4 w-4" />
+                  Sistema
+                  {theme === "system" && <Check className="ml-auto h-4 w-4" />}
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setOpen(true)}>
-                <LogOut />
+                <LogOut className="mr-2 h-4 w-4" />
                 Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -129,7 +154,7 @@ export function NavUser() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para ver el perfil */}
+      {/* Dialog perfil */}
       <Dialog open={openProfile} onOpenChange={setOpenProfile}>
         <DialogContent>
           <DialogHeader>
@@ -138,12 +163,8 @@ export function NavUser() {
           </DialogHeader>
           <div className="flex flex-col items-center gap-4 py-2">
             <Avatar className="w-16 h-16">
-              {user.avatar ? (
-                <AvatarImage src={user.avatar} alt={user.name} />
-              ) : null}
-              <AvatarFallback className="bg-[#5951e6] text-white">
-                {user.initials}
-              </AvatarFallback>
+              {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
+              <AvatarFallback className="bg-[#5951e6] text-white">{user.initials}</AvatarFallback>
             </Avatar>
             <div className="text-center space-y-1">
               <div className="font-bold text-lg">{user.name}</div>
