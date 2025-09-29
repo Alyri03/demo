@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,13 +32,22 @@ export default function DisponibilityModal({ open, onClose, facility }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [startHour, setStartHour] = useState("");
   const [endHour, setEndHour] = useState("");
+  const [durationH, setDurationH] = useState(0);
   const [error, setError] = useState("");
 
-  if (!facility) return null;
-
+  // hooks siempre presentes
   const hours = [
-    "08:00","09:00","10:00","11:00","12:00",
-    "13:00","14:00","15:00","16:00","17:00","18:00",
+    "08:00",
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "13:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00",
+    "18:00",
   ];
 
   const today = new Date();
@@ -50,14 +59,31 @@ export default function DisponibilityModal({ open, onClose, facility }) {
     disabledDays = { before: dateNext };
   }
 
-  const getTotalPrice = () => {
+  const quickDates = useMemo(() => {
+    const f = (d) =>
+      new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
+    const t = f(new Date());
+    const tomorrow = new Date(t);
+    tomorrow.setDate(t.getDate() + 1);
+    const nextSat = new Date(t);
+    nextSat.setDate(t.getDate() + ((6 - t.getDay() + 7) % 7 || 7));
+    return [
+      { label: "Hoy", date: t },
+      { label: "Mañana", date: tomorrow },
+      { label: "Próx. sábado", date: nextSat },
+    ];
+  }, []);
+
+  const hoursCount = useMemo(() => {
     if (!startHour || !endHour) return 0;
     const startIndex = hours.indexOf(startHour);
     const endIndex = hours.indexOf(endHour);
-    const hoursCount = endIndex - startIndex;
-    if (hoursCount <= 0) return 0;
-    return hoursCount * (facility.price || 0);
-  };
+    const diff = endIndex - startIndex;
+    return diff > 0 ? diff : 0;
+  }, [startHour, endHour, hours]);
+
+  const getTotalPrice = () =>
+    hoursCount > 0 ? hoursCount * (facility?.price || 0) : 0;
 
   const validEndHours = startHour
     ? hours.filter((h) => hours.indexOf(h) > hours.indexOf(startHour))
@@ -65,8 +91,30 @@ export default function DisponibilityModal({ open, onClose, facility }) {
 
   const handleStartHourChange = (value) => {
     setStartHour(value);
-    if (endHour && hours.indexOf(value) >= hours.indexOf(endHour)) {
+    setError("");
+    if (durationH > 0) {
+      const startIndex = hours.indexOf(value);
+      const endIndex = startIndex + durationH;
+      if (endIndex < hours.length) setEndHour(hours[endIndex]);
+      else {
+        setEndHour("");
+        setError("La duración excede el horario disponible.");
+      }
+    } else if (endHour && hours.indexOf(value) >= hours.indexOf(endHour)) {
       setEndHour("");
+    }
+  };
+
+  const handleDuration = (h) => {
+    setDurationH(h);
+    setError("");
+    if (!startHour || h === 0) return;
+    const startIndex = hours.indexOf(startHour);
+    const endIndex = startIndex + h;
+    if (endIndex < hours.length) setEndHour(hours[endIndex]);
+    else {
+      setEndHour("");
+      setError("La duración excede el horario disponible.");
     }
   };
 
@@ -76,49 +124,160 @@ export default function DisponibilityModal({ open, onClose, facility }) {
       return;
     }
     setError("");
-
-    // Toast pro al reservar
     toast.success("Reserva confirmada", {
       description: `${facility.title} el ${format(
         selectedDate,
         "dd/MM/yyyy"
-      )} de ${startHour} a ${endHour}. Paga en la sección Pagos e Historial.`,
+      )} de ${startHour} a ${endHour}.`,
       duration: 5000,
     });
-
     onClose();
   };
 
+  if (!facility) return null;
+
   const badgeClasses = "flex items-center gap-1 h-6 px-2 py-0 text-xs";
+  const primaryPurple =
+    "bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#5951e6]";
+  const outlinePurple =
+    "border-[#5951e6] text-[#5951e6] hover:bg-[#eef2ff] focus-visible:ring-[#5951e6]";
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[750px] w-[750px] p-6">
+      <DialogContent className="!max-w-[920px] w-[920px] p-6">
         <DialogHeader>
-          <DialogTitle className="text-center mb-6">
-            Disponibilidad de {facility?.title}
+          <DialogTitle className="text-center">
+            Disponibilidad de {facility.title}
           </DialogTitle>
         </DialogHeader>
 
-        {/* Menos separación entre columnas y calendario centrado */}
-        <div className="grid grid-cols-[380px_min-content] gap-4">
-          {/* IZQUIERDA: imagen + info */}
-          <div className="flex flex-col">
-            <div className="bg-gray-200 rounded-lg w-full h-[220px] flex items-center justify-center">
+        {/* NUEVO ORDEN: IZQ (Calendario + horarios) | DER (Imagen + detalle + resumen) */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* IZQUIERDA */}
+          <div className="flex flex-col gap-4">
+            {/* Accesos rápidos */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {quickDates.map((q) => (
+                <Button
+                  key={q.label}
+                  variant="outline"
+                  className={outlinePurple + " h-8 px-3"}
+                  onClick={() => setSelectedDate(q.date)}
+                >
+                  {q.label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Calendario */}
+            <div className="rounded-lg border p-3">
+              <p className="text-sm text-gray-600 font-medium mb-2 text-center">
+                Selecciona una fecha
+              </p>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(d) => d && setSelectedDate(d)}
+                disabled={disabledDays}
+                className="mx-auto"
+              />
+            </div>
+
+            {/* Horarios compactos */}
+            <div className="rounded-lg border p-3">
+              <p className="font-semibold mb-2">Horario</p>
+
+              <div className="mb-3">
+                <p className="text-xs text-muted-foreground mb-1">
+                  Duración rápida
+                </p>
+                <div className="inline-flex gap-1 rounded-lg border p-1">
+                  {[0, 1, 2, 3].map((h) => (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() => handleDuration(h)}
+                      className={[
+                        "h-8 px-3 rounded-md text-sm transition",
+                        h === durationH
+                          ? "bg-[#5951e6] text-white"
+                          : "hover:bg-muted",
+                      ].join(" ")}
+                      title={h === 0 ? "Libre" : `${h} hora(s)`}
+                    >
+                      {h === 0 ? "Libre" : `${h} h`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Hora inicio</label>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <Select
+                      onValueChange={handleStartHourChange}
+                      value={startHour}
+                    >
+                      <SelectTrigger className="h-10 w-36">
+                        <SelectValue placeholder="Selecciona" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hours.map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Hora fin</label>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <Select onValueChange={setEndHour} value={endHour}>
+                      <SelectTrigger className="h-10 w-36">
+                        <SelectValue placeholder="Selecciona" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {validEndHours.map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {error && <p className="text-red-500 text-xs mt-3">{error}</p>}
+            </div>
+          </div>
+
+          {/* DERECHA */}
+          <div className="flex flex-col gap-4">
+            {/* Imagen + tags */}
+            <div className="bg-gray-100 rounded-lg w-full h-[220px] overflow-hidden">
               {facility.image ? (
                 <img
                   src={facility.image}
                   alt={facility.title}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-gray-500">[ Imagen aquí ]</span>
+                <div className="w-full h-full grid place-items-center text-gray-500">
+                  [ Imagen aquí ]
+                </div>
               )}
             </div>
 
-            <div className="mt-3 w-full">
+            {/* Título + features */}
+            <div>
               <p className="font-semibold text-lg">{facility.title}</p>
-
               <div className="flex flex-wrap gap-1 mt-2 text-gray-700">
                 <Badge variant="secondary" className={badgeClasses}>
                   <Users className="w-3 h-3" /> Hasta {facility.capacity}
@@ -150,84 +309,67 @@ export default function DisponibilityModal({ open, onClose, facility }) {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* DERECHA: calendario centrado */}
-          <div className="flex flex-col items-center w-[300px]">
-            <p className="text-sm text-gray-600 font-medium mb-2 text-center">
-              Selecciona una fecha
-            </p>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              disabled={disabledDays}
-              className="mx-auto"
-            />
+            {/* Resumen limpio */}
+            <div className="rounded-lg border p-4 bg-muted/20">
+              <p className="font-semibold mb-2">Resumen</p>
+              <div className="text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span>Fecha</span>
+                  <span>{format(selectedDate, "dd/MM/yyyy")}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Horario</span>
+                  <span>
+                    {startHour && endHour ? `${startHour} – ${endHour}` : "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Duración</span>
+                  <span>{hoursCount > 0 ? `${hoursCount} h` : "—"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tarifa</span>
+                  <span>S/ {facility.price || 0} / h</span>
+                </div>
+                <hr className="my-2" />
+                <div
+                  className="flex justify-between font-semibold"
+                  aria-live="polite"
+                >
+                  <span>Total</span>
+                  <span className="text-[#5951e6]">S/ {getTotalPrice()}</span>
+                </div>
+                {hoursCount > 0 && (
+                  <div className="text-xs text-muted-foreground text-right">{`S/ ${
+                    facility.price || 0
+                  } × ${hoursCount} h`}</div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ABAJO: horas + total */}
-        <div className="mt-6 flex flex-col items-center">
-          <div className="grid grid-cols-2 gap-8 w-full max-w-md">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Hora inicio</label>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <Select onValueChange={handleStartHourChange} value={startHour}>
-                  <SelectTrigger className="h-12 w-32 text-base">
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hours.map((h) => (
-                      <SelectItem key={h} value={h}>
-                        {h}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Hora fin</label>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <Select onValueChange={setEndHour} value={endHour}>
-                  <SelectTrigger className="h-12 w-32 text-base">
-                    <SelectValue placeholder="Selecciona" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {validEndHours.map((h) => (
-                      <SelectItem key={h} value={h}>
-                        {h}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-sm font-medium mt-4">
-            Total:{" "}
-            <span className="text-lg font-bold text-primary">
+        {/* Footer con Total + CTA */}
+        <DialogFooter className="pt-4 gap-3 sm:justify-between">
+          <div className="text-sm sm:text-base">
+            <span className="text-muted-foreground mr-2">Total:</span>
+            <span className="font-semibold text-[#5951e6]">
               S/ {getTotalPrice()}
             </span>
-          </p>
-          {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-        </div>
-
-        <DialogFooter className="pt-6 justify-center">
-          <Button variant="outline" onClick={onClose}>
-            Cerrar
-          </Button>
-          <Button
-            disabled={!startHour || !endHour || getTotalPrice() <= 0}
-            onClick={handleReserve}
-          >
-            Reservar
-          </Button>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cerrar
+            </Button>
+            <Button
+              className={primaryPurple}
+              disabled={!startHour || !endHour || getTotalPrice() <= 0}
+              onClick={handleReserve}
+            >
+              Reservar
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

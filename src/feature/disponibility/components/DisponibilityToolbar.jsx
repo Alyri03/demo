@@ -30,6 +30,15 @@ function formatDateEs(date) {
   });
 }
 
+/* —— Estilos morados reutilizables —— */
+const PURPLE_SOLID =
+  "bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#5951e6]";
+const PURPLE_OUTLINE =
+  "border-[#5951e6] text-[#5951e6] hover:bg-[#eef2ff] focus-visible:ring-[#5951e6]";
+const SELECT_PURPLE =
+  "border-[#5951e6] hover:bg-[#eef2ff] focus-visible:ring-[#5951e6] " +
+  "text-[#5951e6] [&>span]:text-[#5951e6] [&>svg]:text-[#5951e6]";
+
 export default function DisponibilityToolbar({
   valueEstado = "",
   onChangeEstado,
@@ -50,39 +59,44 @@ export default function DisponibilityToolbar({
     >
       {/* Filtros */}
       <div className="flex flex-col md:flex-row gap-3">
-        {/* Estado */}
+        {/* Estado (morado) */}
         <Select
           value={valueEstado || "all"}
           onValueChange={(v) => onChangeEstado?.(v === "all" ? "" : v)}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className={cn("w-[180px]", SELECT_PURPLE)}>
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="Reservado">Reservado</SelectItem>
-            <SelectItem value="Pendiente">Pendiente</SelectItem>
-            <SelectItem value="Cancelado">Cancelado</SelectItem>
-            <SelectItem value="Finalizado">Finalizado</SelectItem>
+            {["Todos:all","Reservado:Reservado","Pendiente:Pendiente","Cancelado:Cancelado","Finalizado:Finalizado"]
+              .map((opt)=> {
+                const [label,val]=opt.split(":");
+                return (
+                  <SelectItem
+                    key={val}
+                    value={val}
+                    className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+                  >
+                    {label}
+                  </SelectItem>
+                );
+              })}
           </SelectContent>
         </Select>
 
-        {/* Fecha (single) */}
+        {/* Fecha (single) — botón morado outline */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
                 "w-[200px] justify-start text-left font-normal",
-                !selected && "text-muted-foreground"
+                !selected && "text-muted-foreground",
+                PURPLE_OUTLINE
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {selected ? (
-                formatDateEs(selected)
-              ) : (
-                <span>Seleccionar fecha</span>
-              )}
+              {selected ? formatDateEs(selected) : <span>Seleccionar fecha</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="p-0" align="start">
@@ -97,14 +111,20 @@ export default function DisponibilityToolbar({
         </Popover>
       </div>
 
-      {/* Exportaciones */}
+      {/* Exportaciones — morado sólido */}
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" className="flex items-center gap-2">
-          <FileDown className="h-4 w-4 text-red-500" />
+        <Button
+          onClick={onExportPdf}
+          className={cn("flex items-center gap-2", PURPLE_SOLID)}
+        >
+          <FileDown className="h-4 w-4 text-white" />
           Exportar PDF
         </Button>
-        <Button variant="outline" className="flex items-center gap-2">
-          <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+        <Button
+          onClick={onExportExcel}
+          className={cn("flex items-center gap-2", PURPLE_SOLID)}
+        >
+          <FileSpreadsheet className="h-4 w-4 text-white" />
           Exportar Excel
         </Button>
       </div>

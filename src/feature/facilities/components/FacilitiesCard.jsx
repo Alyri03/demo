@@ -33,7 +33,7 @@ export default function FacilitiesCard({
   availableToday,
   nextAvailability,
   discountSocio,
-  onOpenModal, 
+  onOpenModal,
 }) {
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -147,7 +147,7 @@ export default function FacilitiesCard({
 
         {/* Botón que abre modal */}
         <Button
-          className="w-full flex items-center gap-2 mt-4"
+          className="w-full flex items-center gap-2 mt-4 bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#5951e6]"
           onClick={onOpenModal}
         >
           <Calendar className="w-4 h-4" />

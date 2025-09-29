@@ -13,8 +13,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { FileDown, FileSpreadsheet, CalendarIcon } from "lucide-react";
+import { FileDown, FileSpreadsheet, Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const PURPLE_SOLID =
+  "bg-[#5951e6] text-white hover:bg-[#544be4] focus-visible:ring-[#5951e6]";
+const PURPLE_OUTLINE =
+  "border-[#5951e6] text-[#5951e6] hover:bg-[#eef2ff] focus-visible:ring-[#5951e6]";
+// Para colorear el texto/chevron del SelectTrigger y también el placeholder
+const SELECT_PURPLE =
+  "border-[#5951e6] hover:bg-[#eef2ff] focus-visible:ring-[#5951e6] " +
+  "text-[#5951e6] [&>span]:text-[#5951e6] [&>svg]:text-[#5951e6]";
 
 export default function PaymentsToolbar() {
   // ahora la fecha es un array en v10 (inicia vacío)
@@ -24,38 +33,69 @@ export default function PaymentsToolbar() {
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
       {/* Filtros a la izquierda */}
       <div className="flex flex-col md:flex-row gap-3">
-        {/* Estado */}
+        {/* Estado - morado */}
         <Select>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className={cn("w-[150px]", SELECT_PURPLE)}>
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="pagado">Pagado</SelectItem>
-            <SelectItem value="pendiente">Pendiente</SelectItem>
+            <SelectItem
+              value="all"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Todos
+            </SelectItem>
+            <SelectItem
+              value="pagado"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Pagado
+            </SelectItem>
+            <SelectItem
+              value="pendiente"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Pendiente
+            </SelectItem>
           </SelectContent>
         </Select>
 
-        {/* Tipo */}
+        {/* Tipo - morado */}
         <Select>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className={cn("w-[150px]", SELECT_PURPLE)}>
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="membresia">Membresía</SelectItem>
-            <SelectItem value="reserva">Reserva</SelectItem>
+            <SelectItem
+              value="all"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Todos
+            </SelectItem>
+            <SelectItem
+              value="membresia"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Membresía
+            </SelectItem>
+            <SelectItem
+              value="reserva"
+              className="data-[highlighted]:bg-[#eef2ff] data-[highlighted]:text-[#5951e6] data-[state=checked]:bg-[#eef2ff] data-[state=checked]:text-[#5951e6]"
+            >
+              Reserva
+            </SelectItem>
           </SelectContent>
         </Select>
 
-        {/* Fecha con Calendar (v10) */}
+        {/* Fecha con Calendar (v10) - morado */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
                 "w-[180px] justify-start text-left font-normal",
-                date.length === 0 && "text-muted-foreground"
+                date.length === 0 && "text-muted-foreground",
+                PURPLE_OUTLINE
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -81,14 +121,14 @@ export default function PaymentsToolbar() {
         </Popover>
       </div>
 
-      {/* Exportaciones a la derecha */}
+      {/* Exportaciones a la derecha - morado */}
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" className="flex items-center gap-2">
-          <FileDown className="h-4 w-4 text-red-500" />
+        <Button className={cn("flex items-center gap-2", PURPLE_SOLID)}>
+          <FileDown className="h-4 w-4 text-white" />
           Exportar PDF
         </Button>
-        <Button variant="outline" className="flex items-center gap-2">
-          <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+        <Button className={cn("flex items-center gap-2", PURPLE_SOLID)}>
+          <FileSpreadsheet className="h-4 w-4 text-white" />
           Exportar Excel
         </Button>
       </div>
